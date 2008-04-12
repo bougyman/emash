@@ -21,7 +21,7 @@ class ServicesGenerator < Rails::Generator::NamedBase
       m.directory "service"
 
       m.directory File.join("config", "lighttpd")
-      m.template File.join("conf_available", "15-application.conf"), File.join("config", "lighttpd", "15-#{service_name}.conf")
+      m.template File.join("conf-available", "15-application.conf"), File.join("config", "lighttpd", "15-#{service_name}.conf")
       
       make_service(m, "generic") if @number == 0
       
