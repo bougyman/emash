@@ -1,7 +1,7 @@
 class ServicesGenerator < Rails::Generator::NamedBase
   default_options :ip => "127.0.0.1", :environment => "production", :number => 5
   #required_options :port_prefix
-  attr_accessor :number, :service_name, :ip, :port, :environment
+  attr_accessor :number, :service_name, :ip, :port, :environment, :document_root, :virtualhost
 
   def initialize(runtime_args, runtime_options = {})
     super
@@ -10,6 +10,8 @@ class ServicesGenerator < Rails::Generator::NamedBase
     @number  = options[:number].to_i
     raise "Too many listeners, are you psycho?! Must be between 0 and 100" unless @number >= 0 and @number <= 100
     @service_name = options[:service_name] || File.basename(RAILS_ROOT)
+    @virtualhost = options[:virtual_host] || @service_name
+    @document_root = options[:document_root] || File.join(RAILS_ROOT, "public")
     @environment = options[:environment]
     @ip = options[:ip]
   end
@@ -17,6 +19,9 @@ class ServicesGenerator < Rails::Generator::NamedBase
   def manifest
     recorded_session = record do |m|
       m.directory "service"
+
+      m.directory File.join("config", "lighttpd")
+      m.template File.join("conf_available", "15-application.conf"), File.join("config", "lighttpd", "15-#{service_name}.conf")
       
       make_service(m, "generic") if @number == 0
       
@@ -34,13 +39,12 @@ class ServicesGenerator < Rails::Generator::NamedBase
     mm.directory File.join("service", name_num, "env")
     mm.directory File.join("service", name_num, "log")
 
-    mm.file 'generic/run', File.join("service", name_num, "run"), :chmod => 0755
-    mm.file 'generic/log/run', File.join("service", name_num, "log", "run"), :chmod => 0755
-    mm.template 'generic/env/RAILS_ROOT', File.join("service", name_num, "env", "RAILS_ROOT")
-    #mm.template 'generic/env/RAILS_ENV', File.join("service", name_num, "env", "RAILS_ENV")
-    mm.template 'generic/env/IP', File.join("service", name_num, "env", "IP")
-    mm.template 'generic/env/PORT', File.join("service", name_num, "env", "PORT")
-
+    mm.file File.join("generic", "run"), File.join("service", name_num, "run"), :chmod => 0755
+    mm.file File.join("generic", "log", "run"), File.join("service", name_num, "log", "run"), :chmod => 0755
+    mm.template File.join("generic", "env", "RAILS_ROOT"), File.join("service", name_num, "env", "RAILS_ROOT")
+    mm.template File.join("generic", "env", "RAILS_ENV"), File.join("service", name_num, "env", "RAILS_ENV")
+    mm.template File.join("generic", "env", "IP"), File.join("service", name_num, "env", "IP")
+    mm.template File.join("generic", "env", "PORT"), File.join("service", name_num, "env", "PORT")
   end
 
   def has_rspec?
