@@ -60,6 +60,7 @@ class ServicesGenerator < Rails::Generator::NamedBase
     opt.separator ''
     opt.separator 'Options:'
     opt.on("-nNAME", "--name NAME","Name of this service (Defaults to basename of RAILS_ROOT)") { |v| options[:ip] = v }
+    opt.on("-hVHOST", "--virtual-host VHOST","The virtual host to use for lighttpd config (Defaults to NAME)") { |v| options[:virtual_host] = v }
     opt.on("-iIP", "--ip IP","IP to bind to (Defaults to localhost)") { |v| options[:ip] = v }
     opt.on("-eENVIRONMENT", "--environment ENVIRONMENT","Choose environment (Defaults to production)") { |v| options[:environment] = v }
     opt.on("--number NUMBER","The number of listeners to create (Default is 5). Use 0 to generate a 'generic' run directory (good for customization)") { |v| options[:number] = v }
