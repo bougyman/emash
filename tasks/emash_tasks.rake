@@ -6,6 +6,7 @@ namespace :emash do
     tarball = download_runit 
     runit_dir = extract_runit(tarball)
     compile_runit(runit_dir)
+    usage
   end
 
   def download_runit
@@ -36,6 +37,14 @@ namespace :emash do
 
   def compile_runit(dir)
     Dir.chdir(dir)
-    puts %x{./package/install}
+    puts %x{./package/compile}
+    FileUtils.mkpath(bin_dir = File.join((ENV["REAL_HOME"] || ENV["HOME"]), "bin"))
+    Dir["command/*"].each do |command|
+      FileUtils.symlink(File.expand_path(command), File.join(bin_dir, File.basename(command)))
+    end
+  end
+
+  def usage
+    puts "Runit Successfully Installed"
   end
 end
