@@ -10,21 +10,17 @@
 #
 # ln -s <%= File.join(RAILS_ROOT, "config", "lighttpd", "15-#{service_name}.conf") %> /etc/lighttpd/conf-available
 # lighty-enable-mod <%= service_name %>
-$HTTP["url"] =~ "^/<%= service_name %>" {
-  server.document-root = "<%= document_root %>"
-  alias.url = ( "/<%= service_name %>" => "<%= document_root %>" )
-  server.error-handler-404 = "/<%= service_name %>/dispatch.fcgi"
-  dir-listing.activate = "disable"
-  fastcgi.server = ("/<%= service_name %>/dispatch.fcgi" =>
-  <%- number.times do |num| -%>
-    ( "local-<%= num %>" =>
-      (
-        "host" => "<%= ip %>",
-        "port" => <%= port.to_s + num.to_s %>,
-        "strip-request-uri" => "/<%= service_name %>"
-      )
-    )<%= "," unless num == (number - 1) %>
-  <%- end -%>
-  )
-}
+url.redirect += ( "^/<%= service_name %>$" => "/<%= service_name %>/" )
+fastcgi.server += ("/<%= service_name %>" =>
+<%- number.times do |num| -%>
+  ( "local-<%= num %>" =>
+    (
+      "host" => "<%= ip %>",
+      "port" => <%= port.to_s + num.to_s %>,
+      "strip-request-uri" => "/<%= service_name %>",
+      "check-local" => "disable"
+    )
+  )<%= "," unless num == (number - 1) %>
+<%- end -%>
+)
 
