@@ -1,19 +1,19 @@
 class ServicesGenerator < Rails::Generator::NamedBase
   default_options :ip => "127.0.0.1", :environment => "production", :number => 5
-  #required_options :port_prefix
-  attr_accessor :number, :service_name, :ip, :port, :environment, :document_root, :virtualhost
+  attr_accessor :number, :service_name, :ip, :port, :environment, :document_root, :virtualhost, :sub_dir
 
   def initialize(runtime_args, runtime_options = {})
     super
-    @port = runtime_args.shift.to_i
-    raise "Invalid Port! Must be between 102 and 654" unless @port.to_i > 102 and @port.to_i < 655
+    @service_name = runtime_args.shift
     @number  = options[:number].to_i
     raise "Too many listeners, are you psycho?! Must be between 0 and 100" unless @number >= 0 and @number <= 100
-    @service_name = options[:service_name] || File.basename(RAILS_ROOT)
+    @sub_dir = options[:sub_dir] || false
     @virtualhost = options[:virtual_host] || @service_name
     @document_root = options[:document_root] || File.join(RAILS_ROOT, "public")
     @environment = options[:environment]
     @ip = options[:ip]
+    @port = options[:port_prefix] || 123
+    raise "Invalid Port! Must be between 102 and 654" unless @port.to_i > 102 and @port.to_i < 655
   end
 
   def manifest
@@ -21,14 +21,23 @@ class ServicesGenerator < Rails::Generator::NamedBase
       m.directory "service"
 
       m.directory File.join("config", "lighttpd")
-      m.template File.join("conf-available", "15-application.conf"), File.join("config", "lighttpd", "15-#{service_name}.conf")
+      if sub_dir
+        m.template File.join("conf-available", "15-application-subdir.conf.erb"), File.join("config", "lighttpd", "15-#{service_name}.conf")
+      else
+        m.template File.join("conf-available", "15-application-virtualhost.conf.erb"), File.join("config", "lighttpd", "15-#{service_name}.conf")
+      end
       
-      make_service(m, "generic") if @number == 0
       
-      @number.times do |num|
-        make_service m, "#{service_name}-#{num}"
+      if @number == 0
+        @number = 1
+        make_service(m, "generic")
+      else
+        @number.times do |num|
+          make_service m, "#{service_name}-#{num}"
+        end
       end
 
+      #TODO: show a readme/usage/how to get this thing running statement
     end
   end
 
@@ -52,18 +61,20 @@ class ServicesGenerator < Rails::Generator::NamedBase
   end
 
   def banner
-    "Usage: #{$0} services PORT_PREFIX
-       PORT_PREFIX (103-654) will be the base of the listening ports, a prefix of 103 would lead to listeners on 1030, 1031, 1032, 1034, and 1035"
+    "Usage: #{$0} services NAME [options]
+      NAME will be the service name of your application (used for starting, restarting, /subdir naming)"
   end
 
   def add_options!(opt)
     opt.separator ''
     opt.separator 'Options:'
-    opt.on("-nNAME", "--name NAME","Name of this service (Defaults to basename of RAILS_ROOT)") { |v| options[:ip] = v }
     opt.on("--virtual-host VHOST","The virtual host to use for lighttpd config (Defaults to NAME)") { |v| options[:virtual_host] = v }
     opt.on("-iIP", "--ip IP","IP to bind to (Defaults to localhost)") { |v| options[:ip] = v }
+    # TODO: allow for subdir + virtual hosting
+    opt.on("-s", "--sub-directory","Run this application as http://yourhost/subdir (where subdir is your service's NAME). NOTE: Enabling this option disables virtualhosting") { |v| options[:sub_dir] = v }
     opt.on("-eENVIRONMENT", "--environment ENVIRONMENT","Choose environment (Defaults to production)") { |v| options[:environment] = v }
     opt.on("--number NUMBER","The number of listeners to create (Default is 5). Use 0 to generate a 'generic' run directory (good for customization)") { |v| options[:number] = v }
+    opt.on("-pPORT_PREFIX", "--port-prefix", "PORT_PREFIX (103-654) will be the base of the listening ports, a prefix of 103 would lead to listeners on 1030, 1031, 1032, 1034, and 1035") { |v| options[:port_prefix] = v }
   end
 
 end
