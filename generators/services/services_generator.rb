@@ -69,12 +69,12 @@ class ServicesGenerator < Rails::Generator::NamedBase
     opt.separator ''
     opt.separator 'Options:'
     opt.on("--virtual-host VHOST","The virtual host to use for lighttpd config (Defaults to NAME)") { |v| options[:virtual_host] = v }
-    opt.on("-iIP", "--ip IP","IP to bind to (Defaults to localhost)") { |v| options[:ip] = v }
+    opt.on("--ip IP","IP to bind to (Defaults to localhost)") { |v| options[:ip] = v }
     # TODO: allow for subdir + virtual hosting
-    opt.on("-s", "--sub-directory","Run this application as http://yourhost/subdir (where subdir is your service's NAME). NOTE: Enabling this option disables virtualhosting") { |v| options[:sub_dir] = v }
-    opt.on("-eENVIRONMENT", "--environment ENVIRONMENT","Choose environment (Defaults to production)") { |v| options[:environment] = v }
+    opt.on("--sub-directory","Run this application as http://yourhost/subdir (where subdir is your service's NAME). NOTE: Enabling this option disables virtualhosting") { options[:sub_dir] = true }
+    opt.on("--environment ENVIRONMENT","Choose environment (Defaults to production)") { |v| options[:environment] = v }
     opt.on("--number NUMBER","The number of listeners to create (Default is 5). Use 0 to generate a 'generic' run directory (good for customization)") { |v| options[:number] = v }
-    opt.on("-pPORT_PREFIX", "--port-prefix", "PORT_PREFIX (103-654) will be the base of the listening ports, a prefix of 103 would lead to listeners on 1030, 1031, 1032, 1034, and 1035") { |v| options[:port_prefix] = v }
+    opt.on("--port-prefix", "PORT_PREFIX (103-654) will be the base of the listening ports, a prefix of 103 would lead to listeners on 1030, 1031, 1032, 1034, and 1035") { |v| options[:port_prefix] = v }
   end
 
 end
